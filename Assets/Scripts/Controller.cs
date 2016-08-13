@@ -2,41 +2,50 @@
 using System.Collections.Generic;
 using System;
 using System.IO;
+using System.Collections;
 
 public class Controller : MonoBehaviour {
 
     public static Controller instance;
 
 	public bool displayGridGizmos;
-	public LayerMask unwalkableMask;
-	Vector2 gridWorldSize;
+    public float moveRate;
 	public float nodeRadius;
 	public Node[,] grid;
-    public int[,] level;
-
+    public string[,] level;
+    public TextAsset levelTextFile;
     public GameObject ground;
     public GameObject wall;
     public GameObject playerPrefab;
+    public LayerMask whatIsPlayer;
+    public LayerMask whatIsWall;
+    public LayerMask whatIsTile;
+    public bool debugMode;
 
+    bool move = false; 
     GameObject player;
-
-    public TextAsset levelTextFile;
-
+    Vector2 gridWorldSize;
     float nodeDiameter;
 	int gridSizeX, gridSizeY;
-
-    private RaycastHit hitInfo;
-    public LayerMask whatIsPlayer;
-    private GameObject objectSelected = null;
-    private bool selected;
+    RaycastHit hitInfo;
+    GameObject objectSelected = null;
+    GameObject TileHolder;
+    GameObject WallHolder;
+    bool selected;
+    Vector3 positionToMoveTo = Vector3.zero;
 
     void Start()
     {
         instance = this;
+        WallHolder = GameObject.FindGameObjectWithTag("WallHolder");
+        TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
     }
 
 	void Awake()
 	{
+        WallHolder = GameObject.FindGameObjectWithTag("WallHolder");
+        TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
+
         level = Load(levelTextFile);
         instance = this;
         nodeDiameter = nodeRadius * 2;
@@ -53,8 +62,28 @@ public class Controller : MonoBehaviour {
     {
         if (instance == null)
             instance = this;
-        GetInput();
 
+        GetInput();
+        PlayerMove();
+    }
+
+    void RefreshGrid()
+    {
+        for (int x = 0; x < gridSizeX; x++)
+        {
+            for (int y = 0; y < gridSizeY; y++)
+            {
+                grid[x, y].walkable = Physics.CheckSphere(grid[x, y].worldPosition, 1, whatIsTile);
+                grid[x, y].walkable = Physics.CheckSphere(grid[x, y].worldPosition, 1, whatIsPlayer);
+                grid[x, y].walkable = !Physics.CheckSphere(grid[x, y].worldPosition, 1, whatIsWall);
+            }
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (!debugMode)
+            return;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
         if (Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hitInfo, 10, whatIsPlayer))
@@ -76,13 +105,30 @@ public class Controller : MonoBehaviour {
         }
     }
 
+    void PlayerMove()
+    {
+        if (player.transform.position != positionToMoveTo)
+        {
+            player.transform.position = Vector3.MoveTowards(player.transform.position, positionToMoveTo, Time.deltaTime * moveRate);
+            NodeFromWorldPoint(player.transform.position).walkable = true;
+        }
+        if (player.transform.position == positionToMoveTo)
+        {
+            move = false;
+        }
+    }
+
     void GetInput()
     {
-        Vector3 positionToMoveTo = Vector3.zero;
+        if (move == true)
+            return;
 
-        if(Input.GetKeyUp(KeyCode.RightArrow))
+        Node node = NodeFromWorldPoint(player.transform.position);
+        NodeFromWorldPoint(positionToMoveTo).walkable = true;
+
+        if (Input.GetKeyUp(KeyCode.RightArrow))
         {
-            Node node = NodeFromWorldPoint(player.transform.position);
+            
             int currentY = node.gridY;
             for(; currentY < gridSizeY; currentY++)
 		    {
@@ -91,12 +137,10 @@ public class Controller : MonoBehaviour {
                 else
                     break;
             }
-            player.transform.position = positionToMoveTo;
-            Debug.Log(positionToMoveTo + " " + NodeFromWorldPoint(positionToMoveTo).ToString());
+            move = true;
         }
         else if (Input.GetKeyUp(KeyCode.LeftArrow))
         {
-            Node node = NodeFromWorldPoint(player.transform.position);
             int currentY = node.gridY;
             for (; currentY > 0; currentY--)
             {
@@ -105,11 +149,10 @@ public class Controller : MonoBehaviour {
                 else
                     break;
             }
-            player.transform.position = positionToMoveTo;
-            Debug.Log(positionToMoveTo + " " + NodeFromWorldPoint(positionToMoveTo).ToString());
-        }else if (Input.GetKeyUp(KeyCode.UpArrow))
+            move = true;
+        }
+        else if (Input.GetKeyUp(KeyCode.UpArrow))
         {
-            Node node = NodeFromWorldPoint(player.transform.position);
             int currentX = node.gridX;
             for (; currentX > 0; currentX--)
             {
@@ -118,12 +161,10 @@ public class Controller : MonoBehaviour {
                 else
                     break;
             }
-            player.transform.position = positionToMoveTo;
-            Debug.Log(positionToMoveTo + " " + NodeFromWorldPoint(positionToMoveTo).ToString());
+            move = true;
         }
         else if (Input.GetKeyUp(KeyCode.DownArrow))
         {
-            Node node = NodeFromWorldPoint(player.transform.position);
             int currentX = node.gridX;
             for (; currentX < gridSizeX; currentX++)
             {
@@ -132,12 +173,12 @@ public class Controller : MonoBehaviour {
                 else
                     break;
             }
-            player.transform.position = positionToMoveTo;
-            Debug.Log(positionToMoveTo + " " + NodeFromWorldPoint(positionToMoveTo).ToString());
+            move = true;
         }
+        NodeFromWorldPoint(positionToMoveTo).walkable = false;
     }
 
-	public int MaxSize
+    public int MaxSize
 	{
 		get
 		{
@@ -155,35 +196,116 @@ public class Controller : MonoBehaviour {
 			for (int y = 0; y < gridSizeY; y++)
 			{
 				Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
-				bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
-				grid[x, y] = new Node(walkable, worldPoint, x, y);
+				grid[x, y] = new Node(false, worldPoint, x, y);
 
                 Node node; GameObject g;
                 switch (level[x, y])
                 {
-                    case 0:
-                        //wall
+                    case "0":
+                        //tile
                         node = grid[x, y];
+                        node.walkable = true;
                         g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
-                        node.gameObject = g;
+                        g.transform.parent = TileHolder.transform;
 
                         break;
-                    case 1:
-                        //cell
+                    case "1":
+                        //immobile wall
                         node = grid[x, y];
                         node.walkable = false;
                         g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
-                        node.gameObject = g;
+                        g.transform.parent = WallHolder.transform;
 
                         break;
-                    case 2:
-                        //cell
+                    case "2":
+                        //tile
                         node = grid[x, y];
+                        node.walkable = true;
                         g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
-                        node.gameObject = g;
+                        g.transform.parent = TileHolder.transform;
 
                         //player
                         player = Instantiate(playerPrefab, node.worldPosition, Quaternion.identity) as GameObject;
+
+                        break;
+                    case "D":
+                        node = grid[x, y];
+                        node.walkable = false;
+
+                        //tile
+                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = TileHolder.transform;
+
+                        //mobile wall 
+                        g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = WallHolder.transform;
+                        g.AddComponent<WallMobility>();
+                        g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.DOWN;
+                        g.GetComponent<WallMobility>().occurRate = .1f;
+                        g.GetComponent<WallMobility>().moveSpeed = 3f;
+                        g.GetComponent<WallMobility>().whatIsWall = whatIsWall;
+                        g.GetComponent<WallMobility>().node = node;
+                        g.GetComponent<WallMobility>().grid = grid;
+
+                        break;
+                    case "U":
+                        node = grid[x, y];
+                        node.walkable = false;
+
+                        //tile
+                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = TileHolder.transform;
+
+                        //mobile wall 
+                        g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = WallHolder.transform;
+                        g.AddComponent<WallMobility>();
+                        g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.UP;
+                        g.GetComponent<WallMobility>().occurRate = .1f;
+                        g.GetComponent<WallMobility>().moveSpeed = 3f;
+                        g.GetComponent<WallMobility>().whatIsWall = whatIsWall;
+                        g.GetComponent<WallMobility>().node = node;
+                        g.GetComponent<WallMobility>().grid = grid;
+
+                        break;
+                    case "L":
+                        node = grid[x, y];
+                        node.walkable = false;
+
+                        //tile
+                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = TileHolder.transform;
+
+                        //mobile wall 
+                        g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = WallHolder.transform;
+                        g.AddComponent<WallMobility>();
+                        g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.LEFT;
+                        g.GetComponent<WallMobility>().occurRate = .1f;
+                        g.GetComponent<WallMobility>().moveSpeed = 3f;
+                        g.GetComponent<WallMobility>().whatIsWall = whatIsWall;
+                        g.GetComponent<WallMobility>().node = node;
+                        g.GetComponent<WallMobility>().grid = grid;
+
+                        break;
+                    case "R":
+                        node = grid[x, y];
+                        node.walkable = false;
+
+                        //tile
+                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = TileHolder.transform;
+
+                        //mobile wall 
+                        g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = WallHolder.transform;
+                        g.AddComponent<WallMobility>();
+                        g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.RIGHT;
+                        g.GetComponent<WallMobility>().occurRate = .1f;
+                        g.GetComponent<WallMobility>().moveSpeed = 3f;
+                        g.GetComponent<WallMobility>().whatIsWall = whatIsWall;
+                        g.GetComponent<WallMobility>().node = node;
+                        g.GetComponent<WallMobility>().grid = grid;
 
                         break;
                 }
@@ -191,9 +313,9 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
-    private int[,] Load(TextAsset fileName)
+    private string[,] Load(TextAsset fileName)
     {
-        int[,] levelFile = null;
+        string[,] levelFile = null;
 
         try
         {
@@ -206,10 +328,10 @@ public class Controller : MonoBehaviour {
                 if (line != null)
                 {
                     if (levelFile == null)
-                        levelFile = new int[lines.Length, line.Length];
+                        levelFile = new string[lines.Length, line.Length];
                     for (int j = 0; j < line.Length; j++)
                     {
-                        levelFile[i, j] = Convert.ToInt32(line[j].ToString());
+                        levelFile[i, j] = line[j].ToString();
                     }
                 }
             }

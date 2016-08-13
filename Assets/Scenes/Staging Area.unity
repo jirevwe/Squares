@@ -338,17 +338,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   displayGridGizmos: 0
-  unwalkableMask:
-    serializedVersion: 2
-    m_Bits: 0
+  moveRate: 5
   nodeRadius: 0.5
+  levelTextFile: {fileID: 4900000, guid: cfcfeff08d06ab14e9e3d71aae733ac3, type: 3}
   ground: {fileID: 132252, guid: 0ab295726c1bc7d488820e8be27b793b, type: 2}
   wall: {fileID: 140004, guid: e48bbcfe1630fd94183dd545cca4bee9, type: 2}
   playerPrefab: {fileID: 142348, guid: ac210a73b9da7444f9042d9507f75915, type: 2}
-  levelTextFile: {fileID: 4900000, guid: a3b575ddc31130e438de646ffe1a1629, type: 3}
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
+  whatIsWall:
+    serializedVersion: 2
+    m_Bits: 512
 --- !u!4 &2002472874
 Transform:
   m_ObjectHideFlags: 0
@@ -362,3 +363,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
+--- !u!1 &2055713869
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 2055713870}
+  m_Layer: 0
+  m_Name: TileHolder
+  m_TagString: TileHolder
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2055713870
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2055713869}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.7264404, y: -0.3388672, z: -1.9147949}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+--- !u!1 &2059480045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 2059480046}
+  m_Layer: 0
+  m_Name: WallHolder
+  m_TagString: WallHolder
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2059480046
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2059480045}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.7264404, y: -0.3388672, z: -1.9147949}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
