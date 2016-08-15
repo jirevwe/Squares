@@ -29,16 +29,19 @@ public class WallMobility : MonoBehaviour {
 
     void LateUpdate()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Input.GetMouseButtonUp(0) && Controller.instance.swipe == EasyTouch.SwipeDirection.None) {
 
-        if (Input.GetMouseButtonUp(0) && Physics.Raycast(ray, out hitInfo, 10, whatIsWall))
-        {
-            if(hitInfo.collider.transform.position == transform.position && hitInfo.transform.gameObject.GetComponent<WallMobility>() != null)
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            if (Physics.Raycast(ray, out hitInfo, 10, whatIsWall))
             {
-                if (flip)
-                    StartCoroutine(Reverse());
-                else
-                    StartCoroutine(Movement());
+                if (hitInfo.collider.transform.position == transform.position && hitInfo.transform.gameObject.GetComponent<WallMobility>() != null)
+                {
+                    if (flip)
+                        StartCoroutine(Reverse());
+                    else
+                        StartCoroutine(Movement());
+                }
             }
         }
     }

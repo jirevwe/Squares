@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 100
-  shakeTime: 0.1
+  shakeTime: 0.05
   whatIsWall:
     serializedVersion: 2
     m_Bits: 512

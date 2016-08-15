@@ -22,6 +22,7 @@ public class Controller : MonoBehaviour {
     public LayerMask whatIsTile;
     public bool debugMode;
 
+    bool isPressed = false;
     bool move = false; 
     GameObject player;
     Vector2 gridWorldSize;
@@ -33,6 +34,10 @@ public class Controller : MonoBehaviour {
     GameObject WallHolder;
     bool selected;
     Vector3 position = Vector3.zero;
+    Vector3 initialClickPos;
+    Vector3 finalClickPos;
+
+    public EasyTouch.SwipeDirection swipe;
 
     void Start()
     {
@@ -70,6 +75,9 @@ public class Controller : MonoBehaviour {
 
         GetInput();
         PlayerMove();
+
+        if (Input.GetKeyUp(KeyCode.Escape))
+            Application.Quit();
     }
 
     void LateUpdate()
@@ -113,6 +121,46 @@ public class Controller : MonoBehaviour {
         if (player.transform.position == position)
         {
             move = false;
+            swipe = EasyTouch.SwipeDirection.None;
+        }
+    }
+
+    void GetSwipe()
+    { 
+        //touch input down
+        if (Input.GetMouseButtonDown(0) && !isPressed)
+        {
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            var vect = ray.origin + (ray.direction * 100f);
+            vect.y = 0;
+
+            initialClickPos = vect;
+
+            isPressed = true;
+        }
+
+        //touch input up
+        if (Input.GetMouseButtonUp(0) && isPressed)
+        {
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            var vect = ray.origin + (ray.direction * 100f);
+            vect.y = 0;
+
+            finalClickPos = vect;
+            isPressed = false;
+
+            if (finalClickPos != initialClickPos)
+            {
+                float dz = Mathf.Abs(finalClickPos.z - initialClickPos.z);
+                float dx = Mathf.Abs(finalClickPos.x - initialClickPos.x);
+
+                float angleOfSwipe = Mathf.Rad2Deg * Mathf.Atan2(dz, dx);
+
+                if(angleOfSwipe > 0 && angleOfSwipe < 30)
+                {
+
+                }
+            }
         }
     }
 
@@ -121,90 +169,112 @@ public class Controller : MonoBehaviour {
         if (move == true)
             return;
 
-        if (Input.GetKeyUp(KeyCode.RightArrow))
+        //GetSwipe();
+
+        if (Input.GetKeyUp(KeyCode.RightArrow) || swipe == EasyTouch.SwipeDirection.Right)
         {
-            Vector3 positionToMoveTo = Vector3.zero;
-
-            Node node = NodeFromWorldPoint(player.transform.position);
-            node.walkable = true;
-
-            int currentY = node.gridY;
-            for(; currentY < gridSizeY; currentY++)
-		    {
-                if (grid[node.gridX, currentY].walkable)
-                {
-                    positionToMoveTo = grid[node.gridX, currentY].worldPosition;
-                }
-                else
-                    break;
-            }
-            move = true;
-            NodeFromWorldPoint(positionToMoveTo).walkable = false;
-            position = positionToMoveTo;
+            OnInputRight();
         }
-        else if (Input.GetKeyUp(KeyCode.LeftArrow))
+        else if (Input.GetKeyUp(KeyCode.LeftArrow) || swipe == EasyTouch.SwipeDirection.Left)
         {
-            Vector3 positionToMoveTo = Vector3.zero;
+            OnInputLeft();
+        }
+        else if (Input.GetKeyUp(KeyCode.UpArrow) || swipe == EasyTouch.SwipeDirection.Up)
+        {
+            OnInputUp();
+        }
+        else if (Input.GetKeyUp(KeyCode.DownArrow) || swipe == EasyTouch.SwipeDirection.Down)
+        {
+            OnInputDown();
+        }
+    }
 
-            Node node = NodeFromWorldPoint(player.transform.position);
-            node.walkable = true;
+    public void OnInputUp()
+    {
+        Vector3 positionToMoveTo = Vector3.zero;
 
-            int currentY = node.gridY;
-            for (; currentY > 0; currentY--)
+        Node node = NodeFromWorldPoint(player.transform.position);
+        node.walkable = true;
+
+        int currentX = node.gridX;
+        for (; currentX > 0; currentX--)
+        {
+            if (grid[currentX, node.gridY].walkable)
             {
-                if (grid[node.gridX, currentY].walkable)
-                {
-                    positionToMoveTo = grid[node.gridX, currentY].worldPosition;
-                }
-                else
-                    break;
+                positionToMoveTo = grid[currentX, node.gridY].worldPosition;
             }
-            move = true;
-            NodeFromWorldPoint(positionToMoveTo).walkable = false;
-            position = positionToMoveTo;
+            else
+                break;
         }
-        else if (Input.GetKeyUp(KeyCode.UpArrow))
+        move = true;
+        NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        position = positionToMoveTo;
+    }
+
+    public void OnInputDown()
+    {
+        Vector3 positionToMoveTo = Vector3.zero;
+
+        Node node = NodeFromWorldPoint(player.transform.position);
+        node.walkable = true;
+
+        int currentX = node.gridX;
+        for (; currentX < gridSizeX; currentX++)
         {
-            Vector3 positionToMoveTo = Vector3.zero;
-
-            Node node = NodeFromWorldPoint(player.transform.position);
-            node.walkable = true;
-
-            int currentX = node.gridX;
-            for (; currentX > 0; currentX--)
+            if (grid[currentX, node.gridY].walkable)
             {
-                if (grid[currentX, node.gridY].walkable)
-                {
-                    positionToMoveTo = grid[currentX, node.gridY].worldPosition;
-                }
-                else
-                    break;
+                positionToMoveTo = grid[currentX, node.gridY].worldPosition;
             }
-            move = true;
-            NodeFromWorldPoint(positionToMoveTo).walkable = false;
-            position = positionToMoveTo;
+            else
+                break;
         }
-        else if (Input.GetKeyUp(KeyCode.DownArrow))
+        move = true;
+        NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        position = positionToMoveTo;
+    }
+
+    public void OnInputLeft()
+    {
+        Vector3 positionToMoveTo = Vector3.zero;
+
+        Node node = NodeFromWorldPoint(player.transform.position);
+        node.walkable = true;
+
+        int currentY = node.gridY;
+        for (; currentY > 0; currentY--)
         {
-            Vector3 positionToMoveTo = Vector3.zero;
-
-            Node node = NodeFromWorldPoint(player.transform.position);
-            node.walkable = true;
-
-            int currentX = node.gridX;
-            for (; currentX < gridSizeX; currentX++)
+            if (grid[node.gridX, currentY].walkable)
             {
-                if (grid[currentX, node.gridY].walkable)
-                {
-                    positionToMoveTo = grid[currentX, node.gridY].worldPosition;
-                }
-                else
-                    break;
+                positionToMoveTo = grid[node.gridX, currentY].worldPosition;
             }
-            move = true;
-            NodeFromWorldPoint(positionToMoveTo).walkable = false;
-            position = positionToMoveTo;
+            else
+                break;
         }
+        move = true;
+        NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        position = positionToMoveTo;
+    }
+
+    public void OnInputRight()
+    {
+        Vector3 positionToMoveTo = Vector3.zero;
+
+        Node node = NodeFromWorldPoint(player.transform.position);
+        node.walkable = true;
+
+        int currentY = node.gridY;
+        for (; currentY < gridSizeY; currentY++)
+        {
+            if (grid[node.gridX, currentY].walkable)
+            {
+                positionToMoveTo = grid[node.gridX, currentY].worldPosition;
+            }
+            else
+                break;
+        }
+        move = true;
+        NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        position = positionToMoveTo;
     }
 
     public int MaxSize
@@ -407,4 +477,52 @@ public class Controller : MonoBehaviour {
 		int y = Mathf.RoundToInt((gridSizeY - 1) * percentY);
 		return grid[x, y];
 	}
+
+    #region SwipeInput
+
+    void OnEnable()
+    {
+        EasyTouch.On_SwipeStart += On_SwipeStart;
+        EasyTouch.On_Swipe += On_Swipe;
+        EasyTouch.On_SwipeEnd += On_SwipeEnd;
+    }
+
+    void OnDisable()
+    {
+        UnsubscribeEvent();
+
+    }
+
+    void OnDestroy()
+    {
+        UnsubscribeEvent();
+    }
+
+    void UnsubscribeEvent()
+    {
+        EasyTouch.On_SwipeStart -= On_SwipeStart;
+        EasyTouch.On_Swipe -= On_Swipe;
+        EasyTouch.On_SwipeEnd -= On_SwipeEnd;
+    }
+
+
+    // At the swipe beginning 
+    private void On_SwipeStart(Gesture gesture)
+    {
+
+    }
+
+    // During the swipe
+    private void On_Swipe(Gesture gesture)
+    {
+
+    }
+
+    // At the swipe end 
+    private void On_SwipeEnd(Gesture gesture)
+    {
+        swipe = gesture.swipe;
+    }
+
+    #endregion
 }

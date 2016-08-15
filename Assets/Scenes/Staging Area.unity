@@ -319,6 +319,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 2002472874}
   - 114: {fileID: 2002472873}
+  - 114: {fileID: 2002472872}
   m_Layer: 0
   m_Name: Generator
   m_TagString: GameController
@@ -326,6 +327,59 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2002472872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2002472871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42241010c6f9ddc46b78abdc21d505c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enable: 1
+  enableRemote: 0
+  gesturePriority: 1
+  StationaryTolerance: 20
+  longTapTime: 1
+  swipeTolerance: 0.5
+  minPinchLength: 0.1
+  minTwistAngle: 0.1
+  doubleTapDetection: 0
+  doubleTapTime: 0.3
+  enable2FingersGesture: 1
+  enableTwist: 1
+  enablePinch: 1
+  enable2FingersSwipe: 1
+  twoFingerPickMethod: 0
+  touchCameras: []
+  autoSelect: 1
+  pickableLayers3D:
+    serializedVersion: 2
+    m_Bits: 0
+  enable2D: 0
+  pickableLayers2D:
+    serializedVersion: 2
+    m_Bits: 1
+  autoUpdatePickedObject: 0
+  allowUIDetection: 1
+  enableUIMode: 1
+  autoUpdatePickedUI: 0
+  enabledNGuiMode: 0
+  nGUILayers:
+    serializedVersion: 2
+    m_Bits: 0
+  nGUICameras: []
+  enableSimulation: 1
+  twistKey: 308
+  swipeKey: 306
+  showGuiInspector: 0
+  showSelectInspector: 1
+  showGestureInspector: 1
+  showTwoFingerInspector: 0
+  showSecondFingerInspector: 0
+  secondFingerTexture: {fileID: 2800000, guid: d3686533aff0e2b4bac7a2a7faf73f7a, type: 3}
 --- !u!114 &2002472873
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -354,6 +408,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   debugMode: 0
+  swipe: 0
 --- !u!4 &2002472874
 Transform:
   m_ObjectHideFlags: 0
