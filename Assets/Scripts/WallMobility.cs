@@ -22,6 +22,11 @@ public class WallMobility : MonoBehaviour {
         UP, DOWN, LEFT, RIGHT
     }
 
+    void Start()
+    {
+        positionToMoveTo = transform.position;
+    }
+
     void LateUpdate()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -39,86 +44,102 @@ public class WallMobility : MonoBehaviour {
     }
 
     void Update () {
-        //if (Controller.instance != null && Controller.instance.grid != null && node == null)
-        //{
-        //    grid = Controller.instance.grid;
-        //    node = Controller.instance.NodeFromWorldPoint(transform.position);
-        //    originalPosition = node.worldPosition;
-        //}
-
         Move();
     }
 	
     IEnumerator Reverse()
     {
-        if (node == null)
-            yield return null;
+        if (node != null && node.walkable)
+        {
+            yield return new WaitForSeconds(occurRate);
 
-        yield return new WaitForSeconds(occurRate);
+            Node currentNode = Controller.instance.NodeFromWorldPoint(transform.position);
+            currentNode.walkable = true;
 
-        Node currentNode = Controller.instance.NodeFromWorldPoint(transform.position);
-        currentNode.walkable = true;
+            positionToMoveTo = node.worldPosition;
+            node.walkable = false;
 
-        positionToMoveTo = node.worldPosition;
-        node.walkable = false;
-
-        move = true;
-        flip = false;
+            move = true;
+            flip = false;
+        }
 
         yield return null;
     }
 
     IEnumerator Movement()
     {
-        if(node == null)
-            yield return null;
-
-        yield return new WaitForSeconds(occurRate);
-
-        int curr = 0;
-        Node currentNode;
-
-        switch (direction)
+        if (node != null)
         {
-            case MovementDirection.DOWN:
-                curr = node.gridX;
-                if (grid[++curr, node.gridY].walkable)
-                    positionToMoveTo = grid[curr, node.gridY].worldPosition;
-                move = true;
-                flip = true;
+            yield return new WaitForSeconds(occurRate);
 
-                break;
-            case MovementDirection.UP:
-                curr = node.gridX;
-                if (grid[--curr, node.gridY].walkable)
-                    positionToMoveTo = grid[curr, node.gridY].worldPosition;
-                move = true;
-                flip = true;
+            int curr = 0;
+            Node currentNode = null;
 
-                break;
-            case MovementDirection.LEFT:
-                curr = node.gridY;
-                if (grid[node.gridX, --curr].walkable)
-                    positionToMoveTo = grid[node.gridX, curr].worldPosition;
-                move = true;
-                flip = true;
+            switch (direction)
+            {
+                case MovementDirection.DOWN:
+                    MoveDown(positionToMoveTo, curr);
 
-                break;
-            case MovementDirection.RIGHT:
-                curr = node.gridY;
-                if (grid[node.gridX, ++curr].walkable)
-                    positionToMoveTo = grid[node.gridX, curr].worldPosition;
-                move = true;
-                flip = true;
+                    break;
+                case MovementDirection.UP:
+                    MoveUp(positionToMoveTo, curr);
 
-                break;
+                    break;
+                case MovementDirection.LEFT:
+                    MoveLeft(positionToMoveTo, curr);
+
+                    break;
+                case MovementDirection.RIGHT:
+                    MoveRight(positionToMoveTo, curr);
+
+                    break;
+            }
+
+            currentNode = Controller.instance.NodeFromWorldPoint(positionToMoveTo);
+            currentNode.walkable = false;
+            node.walkable = true;
+
+            if (transform.position == positionToMoveTo)
+                StartCoroutine(Reverse());
         }
-
-        currentNode = Controller.instance.NodeFromWorldPoint(positionToMoveTo);
-        currentNode.walkable = false;
-        node.walkable = true;
-
         yield return null;
+    }
+
+
+    void MoveUp(Vector3 targetPosition, int curr)
+    {
+        curr = node.gridX;
+        if (grid[--curr, node.gridY].walkable)
+            positionToMoveTo = grid[curr, node.gridY].worldPosition;
+        move = true;
+        flip = true;
+    }
+
+    void MoveDown(Vector3 targetPosition, int curr)
+    {
+        curr = node.gridX;
+        if (grid[++curr, node.gridY].walkable)
+            positionToMoveTo = grid[curr, node.gridY].worldPosition;
+        move = true;
+        flip = true;
+    }
+
+    void MoveLeft(Vector3 targetPosition, int curr)
+    {
+        curr = node.gridY;
+        if (grid[node.gridX, --curr].walkable)
+            positionToMoveTo = grid[node.gridX, curr].worldPosition;
+        move = true;
+        flip = true;
+    }
+
+    void MoveRight(Vector3 targetPosition, int curr)
+    {
+        curr = node.gridY;
+        if (grid[node.gridX, ++curr].walkable)
+            positionToMoveTo = grid[node.gridX, curr].worldPosition;
+        move = true;
+        flip = true;
     }
 
     void Move()

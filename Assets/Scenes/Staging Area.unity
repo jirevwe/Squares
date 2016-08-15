@@ -340,7 +340,7 @@ MonoBehaviour:
   displayGridGizmos: 0
   moveRate: 5
   nodeRadius: 0.5
-  levelTextFile: {fileID: 4900000, guid: cfcfeff08d06ab14e9e3d71aae733ac3, type: 3}
+  levelTextFile: {fileID: 4900000, guid: a3b575ddc31130e438de646ffe1a1629, type: 3}
   ground: {fileID: 132252, guid: 0ab295726c1bc7d488820e8be27b793b, type: 2}
   wall: {fileID: 140004, guid: e48bbcfe1630fd94183dd545cca4bee9, type: 2}
   playerPrefab: {fileID: 142348, guid: ac210a73b9da7444f9042d9507f75915, type: 2}
@@ -350,6 +350,10 @@ MonoBehaviour:
   whatIsWall:
     serializedVersion: 2
     m_Bits: 512
+  whatIsTile:
+    serializedVersion: 2
+    m_Bits: 1024
+  debugMode: 0
 --- !u!4 &2002472874
 Transform:
   m_ObjectHideFlags: 0

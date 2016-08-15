@@ -32,7 +32,7 @@ public class Controller : MonoBehaviour {
     GameObject TileHolder;
     GameObject WallHolder;
     bool selected;
-    Vector3 positionToMoveTo = Vector3.zero;
+    Vector3 position = Vector3.zero;
 
     void Start()
     {
@@ -55,7 +55,12 @@ public class Controller : MonoBehaviour {
 
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
 		gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
-		CreateGrid();
+
+        CreateGrid();
+
+        position = player.transform.position;
+        NodeFromWorldPoint(position).walkable = false;
+        move = true;
 	}
 
     void Update()
@@ -67,24 +72,18 @@ public class Controller : MonoBehaviour {
         PlayerMove();
     }
 
-    void RefreshGrid()
-    {
-        for (int x = 0; x < gridSizeX; x++)
-        {
-            for (int y = 0; y < gridSizeY; y++)
-            {
-                grid[x, y].walkable = Physics.CheckSphere(grid[x, y].worldPosition, 1, whatIsTile);
-                grid[x, y].walkable = Physics.CheckSphere(grid[x, y].worldPosition, 1, whatIsPlayer);
-                grid[x, y].walkable = !Physics.CheckSphere(grid[x, y].worldPosition, 1, whatIsWall);
-            }
-        }
-    }
-
     void LateUpdate()
     {
         if (!debugMode)
             return;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if(Input.GetMouseButtonUp(1) && Physics.Raycast(ray, out hitInfo))
+        {
+            var vect = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            vect.y = 0;
+            Debug.Log(NodeFromWorldPoint(vect).walkable);
+        }
 
         if (Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hitInfo, 10, whatIsPlayer))
         {
@@ -107,12 +106,11 @@ public class Controller : MonoBehaviour {
 
     void PlayerMove()
     {
-        if (player.transform.position != positionToMoveTo)
+        if (player.transform.position != position && position != Vector3.zero)
         {
-            player.transform.position = Vector3.MoveTowards(player.transform.position, positionToMoveTo, Time.deltaTime * moveRate);
-            NodeFromWorldPoint(player.transform.position).walkable = true;
+            player.transform.position = Vector3.MoveTowards(player.transform.position, position, Time.deltaTime * moveRate);
         }
-        if (player.transform.position == positionToMoveTo)
+        if (player.transform.position == position)
         {
             move = false;
         }
@@ -123,59 +121,90 @@ public class Controller : MonoBehaviour {
         if (move == true)
             return;
 
-        Node node = NodeFromWorldPoint(player.transform.position);
-        NodeFromWorldPoint(positionToMoveTo).walkable = true;
-
         if (Input.GetKeyUp(KeyCode.RightArrow))
         {
-            
+            Vector3 positionToMoveTo = Vector3.zero;
+
+            Node node = NodeFromWorldPoint(player.transform.position);
+            node.walkable = true;
+
             int currentY = node.gridY;
             for(; currentY < gridSizeY; currentY++)
 		    {
                 if (grid[node.gridX, currentY].walkable)
+                {
                     positionToMoveTo = grid[node.gridX, currentY].worldPosition;
+                }
                 else
                     break;
             }
             move = true;
+            NodeFromWorldPoint(positionToMoveTo).walkable = false;
+            position = positionToMoveTo;
         }
         else if (Input.GetKeyUp(KeyCode.LeftArrow))
         {
+            Vector3 positionToMoveTo = Vector3.zero;
+
+            Node node = NodeFromWorldPoint(player.transform.position);
+            node.walkable = true;
+
             int currentY = node.gridY;
             for (; currentY > 0; currentY--)
             {
                 if (grid[node.gridX, currentY].walkable)
+                {
                     positionToMoveTo = grid[node.gridX, currentY].worldPosition;
+                }
                 else
                     break;
             }
             move = true;
+            NodeFromWorldPoint(positionToMoveTo).walkable = false;
+            position = positionToMoveTo;
         }
         else if (Input.GetKeyUp(KeyCode.UpArrow))
         {
+            Vector3 positionToMoveTo = Vector3.zero;
+
+            Node node = NodeFromWorldPoint(player.transform.position);
+            node.walkable = true;
+
             int currentX = node.gridX;
             for (; currentX > 0; currentX--)
             {
                 if (grid[currentX, node.gridY].walkable)
+                {
                     positionToMoveTo = grid[currentX, node.gridY].worldPosition;
+                }
                 else
                     break;
             }
             move = true;
+            NodeFromWorldPoint(positionToMoveTo).walkable = false;
+            position = positionToMoveTo;
         }
         else if (Input.GetKeyUp(KeyCode.DownArrow))
         {
+            Vector3 positionToMoveTo = Vector3.zero;
+
+            Node node = NodeFromWorldPoint(player.transform.position);
+            node.walkable = true;
+
             int currentX = node.gridX;
             for (; currentX < gridSizeX; currentX++)
             {
                 if (grid[currentX, node.gridY].walkable)
+                {
                     positionToMoveTo = grid[currentX, node.gridY].worldPosition;
+                }
                 else
                     break;
             }
             move = true;
+            NodeFromWorldPoint(positionToMoveTo).walkable = false;
+            position = positionToMoveTo;
         }
-        NodeFromWorldPoint(positionToMoveTo).walkable = false;
     }
 
     public int MaxSize
@@ -336,10 +365,7 @@ public class Controller : MonoBehaviour {
                 }
             }
             return levelFile;
-        }
-        // If anything broke in the try block, we throw an exception with information
-        // on what didn't work
-        catch (IOException e)
+        }catch (IOException e)
         {
             Debug.LogError(string.Format("{0}\n", e.Message));
             return levelFile;
