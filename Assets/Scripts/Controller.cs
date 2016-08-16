@@ -17,10 +17,12 @@ public class Controller : MonoBehaviour {
     public GameObject ground;
     public GameObject wall;
     public GameObject playerPrefab;
+    public GameObject objectiveTile;
     public LayerMask whatIsPlayer;
     public LayerMask whatIsWall;
     public LayerMask whatIsTile;
     public bool debugMode;
+    public List<Node> objectiveNodes;
 
     bool isPressed = false;
     bool move = false; 
@@ -32,10 +34,12 @@ public class Controller : MonoBehaviour {
     GameObject objectSelected = null;
     GameObject TileHolder;
     GameObject WallHolder;
+    GameObject ObjectiveHolder;
     bool selected;
     Vector3 position = Vector3.zero;
     Vector3 initialClickPos;
     Vector3 finalClickPos;
+    List<GameObject> objectiveNodeGameobjects;
 
     public EasyTouch.SwipeDirection swipe;
 
@@ -44,12 +48,14 @@ public class Controller : MonoBehaviour {
         instance = this;
         WallHolder = GameObject.FindGameObjectWithTag("WallHolder");
         TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
+        ObjectiveHolder = GameObject.FindGameObjectWithTag("ObjectiveHolder");
     }
 
 	void Awake()
 	{
         WallHolder = GameObject.FindGameObjectWithTag("WallHolder");
         TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
+        ObjectiveHolder = GameObject.FindGameObjectWithTag("ObjectiveHolder");
 
         level = Load(levelTextFile);
         instance = this;
@@ -60,6 +66,9 @@ public class Controller : MonoBehaviour {
 
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
 		gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
+
+        objectiveNodes = new List<Node>();
+        objectiveNodeGameobjects = new List<GameObject>();
 
         CreateGrid();
 
@@ -122,6 +131,7 @@ public class Controller : MonoBehaviour {
         {
             move = false;
             swipe = EasyTouch.SwipeDirection.None;
+            PlayerOnObjective(position);
         }
     }
 
@@ -277,6 +287,19 @@ public class Controller : MonoBehaviour {
         position = positionToMoveTo;
     }
 
+    public void PlayerOnObjective(Vector3 currentPos)
+    {
+        Node node = objectiveNodes.Find(n => n.worldPosition == currentPos);
+        if (node != null)
+        {
+            int index = objectiveNodes.IndexOf(node);
+            objectiveNodes.RemoveAt(index);
+
+            objectiveNodeGameobjects[index].SetActive(false);
+            objectiveNodeGameobjects.RemoveAt(index);
+        }
+    }
+
     public int MaxSize
 	{
 		get
@@ -316,7 +339,7 @@ public class Controller : MonoBehaviour {
                         g.transform.parent = WallHolder.transform;
 
                         break;
-                    case "2":
+                    case "P":
                         //tile
                         node = grid[x, y];
                         node.walkable = true;
@@ -405,6 +428,22 @@ public class Controller : MonoBehaviour {
                         g.GetComponent<WallMobility>().whatIsWall = whatIsWall;
                         g.GetComponent<WallMobility>().node = node;
                         g.GetComponent<WallMobility>().grid = grid;
+
+                        break;
+                    case "X":
+                        node = grid[x, y];
+                        node.walkable = true;
+                        node.colored = true;
+                        objectiveNodes.Add(node);
+
+                        //tile
+                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = TileHolder.transform;
+
+                        //objective
+                        g = Instantiate(objectiveTile, node.worldPosition, Quaternion.identity) as GameObject;
+                        g.transform.parent = ObjectiveHolder.transform;
+                        objectiveNodeGameobjects.Add(g);
 
                         break;
                 }

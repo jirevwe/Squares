@@ -172,6 +172,34 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!1 &1318743825
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1318743826}
+  m_Layer: 0
+  m_Name: ObjectiveHolder
+  m_TagString: ObjectiveHolder
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1318743826
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1318743825}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.75671387, y: -0.08251953, z: -0.30981445}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
 --- !u!1 &1340379077
 GameObject:
   m_ObjectHideFlags: 0
@@ -398,6 +426,7 @@ MonoBehaviour:
   ground: {fileID: 132252, guid: 0ab295726c1bc7d488820e8be27b793b, type: 2}
   wall: {fileID: 140004, guid: e48bbcfe1630fd94183dd545cca4bee9, type: 2}
   playerPrefab: {fileID: 142348, guid: ac210a73b9da7444f9042d9507f75915, type: 2}
+  objectiveTile: {fileID: 187320, guid: c77c2bfcddfae604f8af73e7c6120eff, type: 2}
   whatIsPlayer:
     serializedVersion: 2
     m_Bits: 256
@@ -408,6 +437,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   debugMode: 0
+  objectiveNodes: []
   swipe: 0
 --- !u!4 &2002472874
 Transform:
