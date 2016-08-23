@@ -1,19 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System;
 using System.IO;
-using System.Collections;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Controller : MonoBehaviour {
 
-    public static Controller instance;
+    public static Controller controller;
 
 	public bool displayGridGizmos;
     public float moveRate;
 	public float nodeRadius;
 	public Node[,] grid;
     public string[,] level;
-    public TextAsset levelTextFile;
     public GameObject ground;
     public GameObject wall;
     public GameObject playerPrefab;
@@ -23,29 +22,32 @@ public class Controller : MonoBehaviour {
     public LayerMask whatIsTile;
     public bool debugMode;
     public List<Node> objectiveNodes;
+    public Text gameTime;
+    public Text movesText;
+    public Texture movableBoxTexture;
 
     bool isPressed = false;
-    bool move = false; 
-    GameObject player;
     Vector2 gridWorldSize;
     float nodeDiameter;
-	int gridSizeX, gridSizeY;
+	public int gridSizeX, gridSizeY;
     RaycastHit hitInfo;
     GameObject objectSelected = null;
     GameObject TileHolder;
     GameObject WallHolder;
     GameObject ObjectiveHolder;
     bool selected;
-    Vector3 position = Vector3.zero;
     Vector3 initialClickPos;
     Vector3 finalClickPos;
-    List<GameObject> objectiveNodeGameobjects;
+    public List<GameObject> objectiveNodeGameobjects;
+    float time;
+    public float movesMade;
+    TextAsset levelTextFile;
 
     public EasyTouch.SwipeDirection swipe;
 
     void Start()
     {
-        instance = this;
+        controller = this;
         WallHolder = GameObject.FindGameObjectWithTag("WallHolder");
         TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
         ObjectiveHolder = GameObject.FindGameObjectWithTag("ObjectiveHolder");
@@ -57,8 +59,10 @@ public class Controller : MonoBehaviour {
         TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
         ObjectiveHolder = GameObject.FindGameObjectWithTag("ObjectiveHolder");
 
+        levelTextFile = Resources.Load(PlayerPrefs.GetString("LEVEL_TO_LOAD")) as TextAsset;
+
         level = Load(levelTextFile);
-        instance = this;
+        controller = this;
         nodeDiameter = nodeRadius * 2;
 
         gridWorldSize.x = level.GetUpperBound(0) + 1;
@@ -71,22 +75,18 @@ public class Controller : MonoBehaviour {
         objectiveNodeGameobjects = new List<GameObject>();
 
         CreateGrid();
-
-        position = player.transform.position;
-        NodeFromWorldPoint(position).walkable = false;
-        move = true;
-	}
+    }
 
     void Update()
     {
-        if (instance == null)
-            instance = this;
+        if (controller == null)
+            controller = this;
 
-        GetInput();
-        PlayerMove();
+        UpdateGameTime();
+        movesText.text = movesMade.ToString();
 
         if (Input.GetKeyUp(KeyCode.Escape))
-            Application.Quit();
+            SceneManager.LoadScene(0);
     }
 
     void LateUpdate()
@@ -121,18 +121,17 @@ public class Controller : MonoBehaviour {
         }
     }
 
-    void PlayerMove()
+    void UpdateGameTime()
     {
-        if (player.transform.position != position && position != Vector3.zero)
-        {
-            player.transform.position = Vector3.MoveTowards(player.transform.position, position, Time.deltaTime * moveRate);
-        }
-        if (player.transform.position == position)
-        {
-            move = false;
-            swipe = EasyTouch.SwipeDirection.None;
-            PlayerOnObjective(position);
-        }
+        time += Time.deltaTime;
+
+        var minutes = time / 60;            //Divide the guiTime by sixty to get the minutes.
+        var seconds = time % 60;            //Use the euclidean division for the seconds.
+        //var fraction = (time * 100) % 100;
+
+        //update the label value
+        //gameTime.text = string.Format("{0:00} : {1:00} : {2:000}", minutes, seconds, fraction);
+        gameTime.text = string.Format("{0:00} : {1:00}", minutes, seconds);
     }
 
     void GetSwipe()
@@ -174,140 +173,6 @@ public class Controller : MonoBehaviour {
         }
     }
 
-    void GetInput()
-    {
-        if (move == true)
-            return;
-
-        //GetSwipe();
-
-        if (Input.GetKeyUp(KeyCode.RightArrow) || swipe == EasyTouch.SwipeDirection.Right)
-        {
-            OnInputRight();
-        }
-        else if (Input.GetKeyUp(KeyCode.LeftArrow) || swipe == EasyTouch.SwipeDirection.Left)
-        {
-            OnInputLeft();
-        }
-        else if (Input.GetKeyUp(KeyCode.UpArrow) || swipe == EasyTouch.SwipeDirection.Up)
-        {
-            OnInputUp();
-        }
-        else if (Input.GetKeyUp(KeyCode.DownArrow) || swipe == EasyTouch.SwipeDirection.Down)
-        {
-            OnInputDown();
-        }
-    }
-
-    public void OnInputUp()
-    {
-        Vector3 positionToMoveTo = Vector3.zero;
-
-        Node node = NodeFromWorldPoint(player.transform.position);
-        node.walkable = true;
-
-        int currentX = node.gridX;
-        for (; currentX > 0; currentX--)
-        {
-            if (grid[currentX, node.gridY].walkable)
-            {
-                positionToMoveTo = grid[currentX, node.gridY].worldPosition;
-            }
-            else
-                break;
-        }
-        move = true;
-        NodeFromWorldPoint(positionToMoveTo).walkable = false;
-        position = positionToMoveTo;
-    }
-
-    public void OnInputDown()
-    {
-        Vector3 positionToMoveTo = Vector3.zero;
-
-        Node node = NodeFromWorldPoint(player.transform.position);
-        node.walkable = true;
-
-        int currentX = node.gridX;
-        for (; currentX < gridSizeX; currentX++)
-        {
-            if (grid[currentX, node.gridY].walkable)
-            {
-                positionToMoveTo = grid[currentX, node.gridY].worldPosition;
-            }
-            else
-                break;
-        }
-        move = true;
-        NodeFromWorldPoint(positionToMoveTo).walkable = false;
-        position = positionToMoveTo;
-    }
-
-    public void OnInputLeft()
-    {
-        Vector3 positionToMoveTo = Vector3.zero;
-
-        Node node = NodeFromWorldPoint(player.transform.position);
-        node.walkable = true;
-
-        int currentY = node.gridY;
-        for (; currentY > 0; currentY--)
-        {
-            if (grid[node.gridX, currentY].walkable)
-            {
-                positionToMoveTo = grid[node.gridX, currentY].worldPosition;
-            }
-            else
-                break;
-        }
-        move = true;
-        NodeFromWorldPoint(positionToMoveTo).walkable = false;
-        position = positionToMoveTo;
-    }
-
-    public void OnInputRight()
-    {
-        Vector3 positionToMoveTo = Vector3.zero;
-
-        Node node = NodeFromWorldPoint(player.transform.position);
-        node.walkable = true;
-
-        int currentY = node.gridY;
-        for (; currentY < gridSizeY; currentY++)
-        {
-            if (grid[node.gridX, currentY].walkable)
-            {
-                positionToMoveTo = grid[node.gridX, currentY].worldPosition;
-            }
-            else
-                break;
-        }
-        move = true;
-        NodeFromWorldPoint(positionToMoveTo).walkable = false;
-        position = positionToMoveTo;
-    }
-
-    public void PlayerOnObjective(Vector3 currentPos)
-    {
-        Node node = objectiveNodes.Find(n => n.worldPosition == currentPos);
-        if (node != null)
-        {
-            int index = objectiveNodes.IndexOf(node);
-            objectiveNodes.RemoveAt(index);
-
-            objectiveNodeGameobjects[index].SetActive(false);
-            objectiveNodeGameobjects.RemoveAt(index);
-        }
-    }
-
-    public int MaxSize
-	{
-		get
-		{
-			return gridSizeX * gridSizeY;
-		}
-	}
-
 	void CreateGrid()
 	{
 		grid = new Node[gridSizeX, gridSizeY];
@@ -327,6 +192,8 @@ public class Controller : MonoBehaviour {
                         //tile
                         node = grid[x, y];
                         node.walkable = true;
+
+                        //ground
                         g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
@@ -335,6 +202,8 @@ public class Controller : MonoBehaviour {
                         //immobile wall
                         node = grid[x, y];
                         node.walkable = false;
+
+                        //wall
                         g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = WallHolder.transform;
 
@@ -343,11 +212,13 @@ public class Controller : MonoBehaviour {
                         //tile
                         node = grid[x, y];
                         node.walkable = true;
+                        
+                        //ground
                         g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //player
-                        player = Instantiate(playerPrefab, node.worldPosition, Quaternion.identity) as GameObject;
+                        g = Instantiate(playerPrefab, node.worldPosition, Quaternion.identity) as GameObject;
 
                         break;
                     case "D":
@@ -358,9 +229,10 @@ public class Controller : MonoBehaviour {
                         g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
-                        //mobile wall 
+                        //mobile wall
                         g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = WallHolder.transform;
+                        g.GetComponent<MeshRenderer>().materials[0].mainTexture = movableBoxTexture;
                         g.AddComponent<WallMobility>();
                         g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.DOWN;
                         g.GetComponent<WallMobility>().occurRate = .1f;
@@ -381,6 +253,7 @@ public class Controller : MonoBehaviour {
                         //mobile wall 
                         g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = WallHolder.transform;
+                        g.GetComponent<MeshRenderer>().materials[0].mainTexture = movableBoxTexture;
                         g.AddComponent<WallMobility>();
                         g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.UP;
                         g.GetComponent<WallMobility>().occurRate = .1f;
@@ -401,6 +274,7 @@ public class Controller : MonoBehaviour {
                         //mobile wall 
                         g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = WallHolder.transform;
+                        g.GetComponent<MeshRenderer>().materials[0].mainTexture = movableBoxTexture;
                         g.AddComponent<WallMobility>();
                         g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.LEFT;
                         g.GetComponent<WallMobility>().occurRate = .1f;
@@ -421,6 +295,7 @@ public class Controller : MonoBehaviour {
                         //mobile wall 
                         g = Instantiate(wall, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = WallHolder.transform;
+                        g.GetComponent<MeshRenderer>().materials[0].mainTexture = movableBoxTexture;
                         g.AddComponent<WallMobility>();
                         g.GetComponent<WallMobility>().direction = WallMobility.MovementDirection.RIGHT;
                         g.GetComponent<WallMobility>().occurRate = .1f;
@@ -474,7 +349,8 @@ public class Controller : MonoBehaviour {
                 }
             }
             return levelFile;
-        }catch (IOException e)
+        }
+        catch (IOException e)
         {
             Debug.LogError(string.Format("{0}\n", e.Message));
             return levelFile;

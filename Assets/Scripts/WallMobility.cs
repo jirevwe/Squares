@@ -29,7 +29,7 @@ public class WallMobility : MonoBehaviour {
 
     void LateUpdate()
     {
-        if (Input.GetMouseButtonUp(0) && Controller.instance.swipe == EasyTouch.SwipeDirection.None) {
+        if (Input.GetMouseButtonUp(0) && Controller.controller.swipe == EasyTouch.SwipeDirection.None) {
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -56,7 +56,7 @@ public class WallMobility : MonoBehaviour {
         {
             yield return new WaitForSeconds(occurRate);
 
-            Node currentNode = Controller.instance.NodeFromWorldPoint(transform.position);
+            Node currentNode = Controller.controller.NodeFromWorldPoint(transform.position);
             currentNode.walkable = true;
 
             positionToMoveTo = node.worldPosition;
@@ -98,7 +98,7 @@ public class WallMobility : MonoBehaviour {
                     break;
             }
 
-            currentNode = Controller.instance.NodeFromWorldPoint(positionToMoveTo);
+            currentNode = Controller.controller.NodeFromWorldPoint(positionToMoveTo);
             currentNode.walkable = false;
             node.walkable = true;
 

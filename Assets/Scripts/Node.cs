@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System;
 
-[System.Serializable]
+[Serializable]
 public class Node
 {
     public bool walkable;
@@ -20,13 +20,7 @@ public class Node
         gridY = _gridY;
     }
 
-    public bool Done
-    {
-        get
-        {
-            return walkable && colored;
-        }
-    }
+    public bool Done { get { return walkable && colored; } }
 
     public override string ToString()
     {
