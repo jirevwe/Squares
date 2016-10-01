@@ -48,7 +48,6 @@ artifacts/
 *_p.c
 *_i.h
 *.ilk
-*.meta
 *.obj
 *.pch
 *.pdb
@@ -261,9 +260,6 @@ ModelManifest.xml
 *.pidb
 *.booproj
 *.apk
-
-# Unity3D generated meta files
-*.pidb.meta
 
 # Unity3D Generated File On Crash Reports
 sysinfo.txt
