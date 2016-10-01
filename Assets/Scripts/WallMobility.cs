@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// Component that makes walls move
+/// </summary>
 public class WallMobility : MonoBehaviour {
 
     public MovementDirection direction;

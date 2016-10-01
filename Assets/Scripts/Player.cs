@@ -2,6 +2,13 @@
 
 public class Player : MonoBehaviour {
 
+    bool isPressed = false;
+    Vector3 initialClickPos;
+    Vector3 finalClickPos;
+    public LayerMask whatIsPlayer;
+    bool selected;
+    RaycastHit hitInfo;
+    GameObject objectSelected = null;
     Vector3 position = Vector3.zero;
     bool move = false;
 
@@ -149,6 +156,77 @@ public class Player : MonoBehaviour {
 
             Controller.controller.objectiveNodeGameobjects[index].SetActive(false);
             Controller.controller.objectiveNodeGameobjects.RemoveAt(index);
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (!Controller.controller.debugMode)
+            return;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (Input.GetMouseButtonUp(1) && Physics.Raycast(ray, out hitInfo))
+        {
+            var vect = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            vect.y = 0;
+            Debug.Log(Controller.controller.NodeFromWorldPoint(vect).walkable);
+        }
+
+        if (Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hitInfo, 10, whatIsPlayer))
+        {
+            selected = true;
+            objectSelected = hitInfo.collider.gameObject;
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            selected = true;
+            objectSelected = null;
+        }
+
+        if (selected && objectSelected != null)
+        {
+            var vect = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            vect.y = 0;
+            hitInfo.collider.transform.position = vect;
+        }
+    }
+
+    void GetSwipe()
+    {
+        //touch input down
+        if (Input.GetMouseButtonDown(0) && !isPressed)
+        {
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            var vect = ray.origin + (ray.direction * 100f);
+            vect.y = 0;
+
+            initialClickPos = vect;
+
+            isPressed = true;
+        }
+
+        //touch input up
+        if (Input.GetMouseButtonUp(0) && isPressed)
+        {
+            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            var vect = ray.origin + (ray.direction * 100f);
+            vect.y = 0;
+
+            finalClickPos = vect;
+            isPressed = false;
+
+            if (finalClickPos != initialClickPos)
+            {
+                float dz = Mathf.Abs(finalClickPos.z - initialClickPos.z);
+                float dx = Mathf.Abs(finalClickPos.x - initialClickPos.x);
+
+                float angleOfSwipe = Mathf.Rad2Deg * Mathf.Atan2(dz, dx);
+
+                if (angleOfSwipe > 0 && angleOfSwipe < 30)
+                {
+                    //todo: I have not decided what to do here yet.
+                }
+            }
         }
     }
 }

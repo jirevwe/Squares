@@ -17,7 +17,6 @@ public class Controller : MonoBehaviour {
     public GameObject wall;
     public GameObject playerPrefab;
     public GameObject objectiveTile;
-    public LayerMask whatIsPlayer;
     public LayerMask whatIsWall;
     public LayerMask whatIsTile;
     public bool debugMode;
@@ -26,18 +25,13 @@ public class Controller : MonoBehaviour {
     public Text movesText;
     public Texture movableBoxTexture;
 
-    bool isPressed = false;
     Vector2 gridWorldSize;
     float nodeDiameter;
+    [HideInInspector]
 	public int gridSizeX, gridSizeY;
-    RaycastHit hitInfo;
-    GameObject objectSelected = null;
     GameObject TileHolder;
     GameObject WallHolder;
     GameObject ObjectiveHolder;
-    bool selected;
-    Vector3 initialClickPos;
-    Vector3 finalClickPos;
     public List<GameObject> objectiveNodeGameobjects;
     float time;
     public float movesMade;
@@ -55,22 +49,26 @@ public class Controller : MonoBehaviour {
 
 	void Awake()
 	{
+        //init
         WallHolder = GameObject.FindGameObjectWithTag("WallHolder");
         TileHolder = GameObject.FindGameObjectWithTag("TileHolder");
         ObjectiveHolder = GameObject.FindGameObjectWithTag("ObjectiveHolder");
 
+        //load file
         levelTextFile = Resources.Load(PlayerPrefs.GetString("LEVEL_TO_LOAD")) as TextAsset;
 
         level = Load(levelTextFile);
         controller = this;
         nodeDiameter = nodeRadius * 2;
 
+        //create level grid
         gridWorldSize.x = level.GetUpperBound(0) + 1;
         gridWorldSize.y = level.GetUpperBound(1) + 1;
 
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
 		gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
 
+        //this is custom stuff will be made generic later
         objectiveNodes = new List<Node>();
         objectiveNodeGameobjects = new List<GameObject>();
 
@@ -81,44 +79,13 @@ public class Controller : MonoBehaviour {
     {
         if (controller == null)
             controller = this;
-
+        
+        //more custom stuff
         UpdateGameTime();
         movesText.text = movesMade.ToString();
 
         if (Input.GetKeyUp(KeyCode.Escape))
             SceneManager.LoadScene(0);
-    }
-
-    void LateUpdate()
-    {
-        if (!debugMode)
-            return;
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-        if(Input.GetMouseButtonUp(1) && Physics.Raycast(ray, out hitInfo))
-        {
-            var vect = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            vect.y = 0;
-            Debug.Log(NodeFromWorldPoint(vect).walkable);
-        }
-
-        if (Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hitInfo, 10, whatIsPlayer))
-        {
-            selected = true;
-            objectSelected = hitInfo.collider.gameObject;
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            selected = true;
-            objectSelected = null;
-        }
-
-        if (selected && objectSelected != null)
-        {
-            var vect = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            vect.y = 0;
-            hitInfo.collider.transform.position = vect;
-        }
     }
 
     void UpdateGameTime()
@@ -134,45 +101,6 @@ public class Controller : MonoBehaviour {
         gameTime.text = string.Format("{0:00} : {1:00}", minutes, seconds);
     }
 
-    void GetSwipe()
-    { 
-        //touch input down
-        if (Input.GetMouseButtonDown(0) && !isPressed)
-        {
-            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            var vect = ray.origin + (ray.direction * 100f);
-            vect.y = 0;
-
-            initialClickPos = vect;
-
-            isPressed = true;
-        }
-
-        //touch input up
-        if (Input.GetMouseButtonUp(0) && isPressed)
-        {
-            var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            var vect = ray.origin + (ray.direction * 100f);
-            vect.y = 0;
-
-            finalClickPos = vect;
-            isPressed = false;
-
-            if (finalClickPos != initialClickPos)
-            {
-                float dz = Mathf.Abs(finalClickPos.z - initialClickPos.z);
-                float dx = Mathf.Abs(finalClickPos.x - initialClickPos.x);
-
-                float angleOfSwipe = Mathf.Rad2Deg * Mathf.Atan2(dz, dx);
-
-                if(angleOfSwipe > 0 && angleOfSwipe < 30)
-                {
-
-                }
-            }
-        }
-    }
-
 	void CreateGrid()
 	{
 		grid = new Node[gridSizeX, gridSizeY];
@@ -186,21 +114,22 @@ public class Controller : MonoBehaviour {
 				grid[x, y] = new Node(false, worldPoint, x, y);
 
                 Node node; GameObject g;
+
+                node = grid[x, y];
+                g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
+
                 switch (level[x, y])
                 {
                     case "0":
                         //tile
-                        node = grid[x, y];
                         node.walkable = true;
 
                         //ground
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         break;
                     case "1":
                         //immobile wall
-                        node = grid[x, y];
                         node.walkable = false;
 
                         //wall
@@ -210,11 +139,9 @@ public class Controller : MonoBehaviour {
                         break;
                     case "P":
                         //tile
-                        node = grid[x, y];
                         node.walkable = true;
                         
                         //ground
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //player
@@ -222,11 +149,9 @@ public class Controller : MonoBehaviour {
 
                         break;
                     case "D":
-                        node = grid[x, y];
                         node.walkable = false;
 
                         //tile
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //mobile wall
@@ -243,11 +168,9 @@ public class Controller : MonoBehaviour {
 
                         break;
                     case "U":
-                        node = grid[x, y];
                         node.walkable = false;
 
                         //tile
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //mobile wall 
@@ -264,11 +187,9 @@ public class Controller : MonoBehaviour {
 
                         break;
                     case "L":
-                        node = grid[x, y];
                         node.walkable = false;
 
                         //tile
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //mobile wall 
@@ -285,11 +206,9 @@ public class Controller : MonoBehaviour {
 
                         break;
                     case "R":
-                        node = grid[x, y];
                         node.walkable = false;
 
                         //tile
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //mobile wall 
@@ -306,13 +225,11 @@ public class Controller : MonoBehaviour {
 
                         break;
                     case "X":
-                        node = grid[x, y];
                         node.walkable = true;
                         node.colored = true;
                         objectiveNodes.Add(node);
 
                         //tile
-                        g = Instantiate(ground, node.worldPosition, Quaternion.identity) as GameObject;
                         g.transform.parent = TileHolder.transform;
 
                         //objective
@@ -326,6 +243,11 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
+    /// <summary>
+    /// Load the level text file and returns it as a tow dimensional array
+    /// </summary>
+    /// <param name="fileName">The index of the level file</param>
+    /// <returns>the 2 dimesional array representation of the level file</returns>
     private string[,] Load(TextAsset fileName)
     {
         string[,] levelFile = null;
@@ -357,6 +279,11 @@ public class Controller : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// returns the immediate neigbhors of a cell
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
     public List<Node> GetNeighbours(Node node)
 	{
 		List<Node> neighbours = new List<Node>();
