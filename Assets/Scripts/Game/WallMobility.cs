@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 /// <summary>
 /// Component that makes walls move
 /// </summary>
-public class WallMobility : MonoBehaviour {
+public class WallMobility : MonoBehaviour, CellBehaviour {
 
     public MovementDirection direction;
     public float occurRate;
@@ -13,9 +14,9 @@ public class WallMobility : MonoBehaviour {
     [HideInInspector]
     public LayerMask whatIsWall;
     [HideInInspector]
-    public Node[,] grid;
+    public Cell[,] grid;
     [HideInInspector]
-    public Node node;
+    public Cell node;
 
     Vector3 positionToMoveTo = Vector3.zero;
     public bool move, flip = false;
@@ -32,7 +33,7 @@ public class WallMobility : MonoBehaviour {
 
     void LateUpdate()
     {
-        if (Input.GetMouseButtonUp(0) && Controller.controller.swipe == EasyTouch.SwipeDirection.None) {
+        if (Input.GetMouseButtonUp(0) && Grid.instance.swipe == EasyTouch.SwipeDirection.None) {
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -59,7 +60,7 @@ public class WallMobility : MonoBehaviour {
         {
             yield return new WaitForSeconds(occurRate);
 
-            Node currentNode = Controller.controller.NodeFromWorldPoint(transform.position);
+            Cell currentNode = Grid.instance.NodeFromWorldPoint(transform.position);
             currentNode.walkable = true;
 
             positionToMoveTo = node.worldPosition;
@@ -79,7 +80,7 @@ public class WallMobility : MonoBehaviour {
             yield return new WaitForSeconds(occurRate);
 
             int curr = 0;
-            Node currentNode = null;
+            Cell currentCell = null;
 
             switch (direction)
             {
@@ -101,8 +102,8 @@ public class WallMobility : MonoBehaviour {
                     break;
             }
 
-            currentNode = Controller.controller.NodeFromWorldPoint(positionToMoveTo);
-            currentNode.walkable = false;
+            currentCell = Grid.instance.NodeFromWorldPoint(positionToMoveTo);
+            currentCell.walkable = false;
             node.walkable = true;
 
             if (transform.position == positionToMoveTo)
@@ -110,7 +111,6 @@ public class WallMobility : MonoBehaviour {
         }
         yield return null;
     }
-
 
     void MoveUp(Vector3 targetPosition, int curr)
     {
@@ -156,5 +156,10 @@ public class WallMobility : MonoBehaviour {
         {
             move = false;
         }
+    }
+
+    public void InitBehavoiur(string character, GameObject g)
+    {
+        
     }
 }

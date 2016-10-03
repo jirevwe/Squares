@@ -14,7 +14,7 @@ public class Player : MonoBehaviour {
 
     void Awake () {
         position = transform.position;
-        Controller.controller.NodeFromWorldPoint(position).walkable = false;
+        Grid.instance.NodeFromWorldPoint(position).walkable = false;
         move = true;
     }
 	
@@ -27,12 +27,12 @@ public class Player : MonoBehaviour {
     {
         if (transform.position != position && position != Vector3.zero)
         {
-            transform.position = Vector3.MoveTowards(transform.position, position, Time.deltaTime * Controller.controller.moveRate);
+            transform.position = Vector3.MoveTowards(transform.position, position, Time.deltaTime * Grid.instance.moveRate);
         }
         if (transform.position == position)
         {
             move = false;
-            Controller.controller.swipe = EasyTouch.SwipeDirection.None;
+            Grid.instance.swipe = EasyTouch.SwipeDirection.None;
             PlayerOnObjective(position);
         }
     }
@@ -42,19 +42,19 @@ public class Player : MonoBehaviour {
         if (move == true)
             return;
 
-        if (Input.GetKeyUp(KeyCode.RightArrow) || Controller.controller.swipe == EasyTouch.SwipeDirection.Right)
+        if (Input.GetKeyUp(KeyCode.RightArrow) || Grid.instance.swipe == EasyTouch.SwipeDirection.Right)
         {
             OnInputRight();
         }
-        else if (Input.GetKeyUp(KeyCode.LeftArrow) || Controller.controller.swipe == EasyTouch.SwipeDirection.Left)
+        else if (Input.GetKeyUp(KeyCode.LeftArrow) || Grid.instance.swipe == EasyTouch.SwipeDirection.Left)
         {
             OnInputLeft();
         }
-        else if (Input.GetKeyUp(KeyCode.UpArrow) || Controller.controller.swipe == EasyTouch.SwipeDirection.Up)
+        else if (Input.GetKeyUp(KeyCode.UpArrow) || Grid.instance.swipe == EasyTouch.SwipeDirection.Up)
         {
             OnInputUp();
         }
-        else if (Input.GetKeyUp(KeyCode.DownArrow) || Controller.controller.swipe == EasyTouch.SwipeDirection.Down)
+        else if (Input.GetKeyUp(KeyCode.DownArrow) || Grid.instance.swipe == EasyTouch.SwipeDirection.Down)
         {
             OnInputDown();
         }
@@ -65,103 +65,103 @@ public class Player : MonoBehaviour {
     {
         Vector3 positionToMoveTo = Vector3.zero;
 
-        Node node = Controller.controller.NodeFromWorldPoint(transform.position);
+        Cell node = Grid.instance.NodeFromWorldPoint(transform.position);
         node.walkable = true;
 
         int currentX = node.gridX;
         for (; currentX > 0; currentX--)
         {
-            if (Controller.controller.grid[currentX, node.gridY].walkable)
-                positionToMoveTo = Controller.controller.grid[currentX, node.gridY].worldPosition;
+            if (((Cell)Grid.instance.grid[currentX, node.gridY]).walkable)
+                positionToMoveTo = Grid.instance.grid[currentX, node.gridY].worldPosition;
             else break;
         }
         move = true;
-        Controller.controller.NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        Grid.instance.NodeFromWorldPoint(positionToMoveTo).walkable = false;
         position = positionToMoveTo;
         if (transform.position != position)
-            ++Controller.controller.movesMade;
+            ++Grid.instance.movesMade;
     }
 
     public void OnInputDown()
     {
         Vector3 positionToMoveTo = Vector3.zero;
 
-        Node node = Controller.controller.NodeFromWorldPoint(transform.position);
+        Cell node = Grid.instance.NodeFromWorldPoint(transform.position);
         node.walkable = true;
 
         int currentX = node.gridX;
-        for (; currentX < Controller.controller.gridSizeX; currentX++)
+        for (; currentX < Grid.instance.gridSizeX; currentX++)
         {
-            if (Controller.controller.grid[currentX, node.gridY].walkable)
-                positionToMoveTo = Controller.controller.grid[currentX, node.gridY].worldPosition;
+            if (((Cell)Grid.instance.grid[currentX, node.gridY]).walkable)
+                positionToMoveTo = Grid.instance.grid[currentX, node.gridY].worldPosition;
             else break;
         }
         move = true;
-        Controller.controller.NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        Grid.instance.NodeFromWorldPoint(positionToMoveTo).walkable = false;
         position = positionToMoveTo;
         if (transform.position != position)
-            ++Controller.controller.movesMade;
+            ++Grid.instance.movesMade;
     }
 
     public void OnInputLeft()
     {
         Vector3 positionToMoveTo = Vector3.zero;
 
-        Node node = Controller.controller.NodeFromWorldPoint(transform.position);
+        Cell node = Grid.instance.NodeFromWorldPoint(transform.position);
         node.walkable = true;
 
         int currentY = node.gridY;
         for (; currentY > 0; currentY--)
         {
-            if (Controller.controller.grid[node.gridX, currentY].walkable)
-                positionToMoveTo = Controller.controller.grid[node.gridX, currentY].worldPosition;
+            if (((Cell)Grid.instance.grid[node.gridX, currentY]).walkable)
+                positionToMoveTo = Grid.instance.grid[node.gridX, currentY].worldPosition;
             else break;
         }
         move = true;
-        Controller.controller.NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        Grid.instance.NodeFromWorldPoint(positionToMoveTo).walkable = false;
         position = positionToMoveTo;
         if (transform.position != position)
-            ++Controller.controller.movesMade;
+            ++Grid.instance.movesMade;
     }
 
     public void OnInputRight()
     {
         Vector3 positionToMoveTo = Vector3.zero;
 
-        Node node = Controller.controller.NodeFromWorldPoint(transform.position);
+        Cell node = Grid.instance.NodeFromWorldPoint(transform.position);
         node.walkable = true;
 
         int currentY = node.gridY;
-        for (; currentY < Controller.controller.gridSizeY; currentY++)
+        for (; currentY < Grid.instance.gridSizeY; currentY++)
         {
-            if (Controller.controller.grid[node.gridX, currentY].walkable)
-                positionToMoveTo = Controller.controller.grid[node.gridX, currentY].worldPosition;
+            if (((Cell)Grid.instance.grid[node.gridX, currentY]).walkable)
+                positionToMoveTo = Grid.instance.grid[node.gridX, currentY].worldPosition;
             else break;
         }
         move = true;
-        Controller.controller.NodeFromWorldPoint(positionToMoveTo).walkable = false;
+        Grid.instance.NodeFromWorldPoint(positionToMoveTo).walkable = false;
         position = positionToMoveTo;
         if (transform.position == position)
             return;
-        ++Controller.controller.movesMade;
+        ++Grid.instance.movesMade;
     }
 
     public void PlayerOnObjective(Vector3 currentPos)
     {
-        Node node = Controller.controller.objectiveNodes.Find(n => n.worldPosition == currentPos);
+        Cell node = Grid.instance.objectiveNodes.Find(n => n.worldPosition == currentPos);
         if (node != null)
         {
-            int index = Controller.controller.objectiveNodes.IndexOf(node);
-            Controller.controller.objectiveNodes.RemoveAt(index);
+            int index = Grid.instance.objectiveNodes.IndexOf(node);
+            Grid.instance.objectiveNodes.RemoveAt(index);
 
-            Controller.controller.objectiveNodeGameobjects[index].SetActive(false);
-            Controller.controller.objectiveNodeGameobjects.RemoveAt(index);
+            Grid.instance.objectiveNodeGameobjects[index].SetActive(false);
+            Grid.instance.objectiveNodeGameobjects.RemoveAt(index);
         }
     }
 
     void LateUpdate()
     {
-        if (!Controller.controller.debugMode)
+        if (!Grid.instance.debugMode)
             return;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -169,7 +169,7 @@ public class Player : MonoBehaviour {
         {
             var vect = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             vect.y = 0;
-            Debug.Log(Controller.controller.NodeFromWorldPoint(vect).walkable);
+            Debug.Log(Grid.instance.NodeFromWorldPoint(vect).walkable);
         }
 
         if (Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hitInfo, 10, whatIsPlayer))

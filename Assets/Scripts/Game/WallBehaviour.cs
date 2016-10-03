@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class WallBehaviour : MonoBehaviour {
+public class WallBehaviour : MonoBehaviour, CellBehaviour {
 
     public float speed;
     public float shakeTime;
@@ -41,5 +41,10 @@ public class WallBehaviour : MonoBehaviour {
                 hitInfo.collider.gameObject.GetComponent<WallBehaviour>().shake = true;
             }
         }
+    }
+
+    public void InitBehavoiur(string character, GameObject g)
+    {
+        
     }
 }
